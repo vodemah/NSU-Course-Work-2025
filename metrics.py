@@ -4,63 +4,40 @@ import csv
 
 from nltk.tokenize import WordPunctTokenizer
 
-train_amounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0}
-test_amounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0}
 
-highest_train = 0
-highest_test = 0
+def metrics(file):
+    tokenizer = WordPunctTokenizer()
+    assert file == 'train' or 'test', 'Функция приняла некорректное значение'
+    file_name = file + '_reviews.csv'
+    reviews_amount = {str(i): 0 for i in range(1, 11)}
+    highest = 0
+    ranges = {'0-100': 0, '101-200': 0, '201-300': 0, '301-500': 0, '500+': 0}
 
-train_ranges = {'0-100': 0, '101-200': 0, '201-300': 0, '301-500': 0, '500+': 0}
-test_ranges = {'0-100': 0, '101-200': 0, '201-300': 0, '301-500': 0, '500+': 0}
+    with open(file_name, mode='r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rating = row['rating']
+            reviews_amount[rating] += 1
+            text = tokenizer.tokenize(row['text'].lower())
+            if len(text) > highest:
+                highest = len(text)
+            if 0 <= len(text) <= 100:
+                ranges['0-100'] += 1
+            elif 101 <= len(text) <= 200:
+                ranges['101-200'] += 1
+            elif 201 <= len(text) <= 300:
+                ranges['201-300'] += 1
+            elif 301 <= len(text) <= 500:
+                ranges['301-500'] += 1
+            else:
+                ranges['500+'] += 1
+
+    return reviews_amount, highest, ranges
 
 
-tokenizer = WordPunctTokenizer()
+for x in ('train', 'test'):
+    metadata = metrics(x)
 
-# Обработка train_reviews.csv
-with open('train_reviews.csv', mode='r', encoding='utf-8') as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        rating = int(row['rating'])
-        if rating in train_amounts:
-            train_amounts[rating] += 1
-        text = tokenizer.tokenize(row['text'].lower())
-        if len(text) > highest_train:
-            highest_train = len(text)
-        if 0 <= len(text) <= 100:
-            train_ranges['0-100'] += 1
-        elif 101 <= len(text) <= 200:
-            train_ranges['101-200'] += 1
-        elif 201 <= len(text) <= 300:
-            train_ranges['201-300'] += 1
-        elif 301 <= len(text) <= 500:
-            train_ranges['301-500'] += 1
-        else:
-            train_ranges['500+'] += 1
-
-# Обработка test_reviews.csv
-with open('test_reviews.csv', mode='r', encoding='utf-8') as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        rating = int(row['rating'])
-        if rating in test_amounts:
-            test_amounts[rating] += 1
-        text = tokenizer.tokenize(row['text'].lower())
-        if len(text) > highest_test:
-            highest_test = len(text)
-        if 0 <= len(text) <= 100:
-            test_ranges['0-100'] += 1
-        elif 101 <= len(text) <= 200:
-            test_ranges['101-200'] += 1
-        elif 201 <= len(text) <= 300:
-            test_ranges['201-300'] += 1
-        elif 301 <= len(text) <= 500:
-            test_ranges['301-500'] += 1
-        else:
-            test_ranges['500+'] += 1
-
-print('Train ratings:', train_amounts)
-print('Test ratings:', test_amounts)
-print('The longest text among train ones:', highest_train)
-print('The longest text among test ones:', highest_test)
-print('The ranges of train texts lengths:', train_ranges)
-print('The ranges of test texts lengths:', test_ranges)
+    print(f'{x.capitalize()} ratings: {metadata[0]}\n'
+          f'The longest text among {x} ones: {metadata[1]}\n'
+          f'The ranges of {x} texts lengths: {metadata[2]}\n\n')
